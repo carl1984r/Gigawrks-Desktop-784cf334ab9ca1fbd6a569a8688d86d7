@@ -54,7 +54,7 @@ export function MeetingComponent({friendState, meeting, meetingSettings}:meeting
     const [videoStream, setVideoStream] = useState<MediaStream | null>()
     const videoStreamRef = useRef<MediaStream | null | undefined>(null);
     useEffect(() => { videoStreamRef.current = videoStream }, [videoStream]);
-    const useWS = useWebSocket(`wss://us.gigawrks.com/room/${meeting}/ws`, true, () => setWsReady(true))
+    const useWS = useWebSocket(`wss://gapi.gigawrks.com/rtc/room/${meeting}/ws`, true, () => setWsReady(true))
 
     const [remoteStreams, setRemoteStreams] = useState<Map<number, userStreams>>(new Map<number, userStreams>);
 
