@@ -1,0 +1,38 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "Gigawrks",
+  "outputfilename": "Gigawrks",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "Gigawrks",
+    "email": "abdoohossamm@gigawrks.com"
+  },
+  "info": {
+    "type": "object",
+    "description": "Data used to populate manifests and version info.",
+    "properties": {
+      "companyName": {
+        "type": "string",
+        "description": "The company name. Defaults to the project name.",
+        "default": "Gigawrks,LLC."
+      },
+      "productName": {
+        "type": "string",
+        "description": "The product name. Defaults to the project name."
+      },
+      "productVersion": {
+        "type": "string",
+        "description": "The version of the product",
+        "default": "0.0.1"
+      },
+      "copyright": {
+        "type": "string",
+        "description": "A copyright string for the product",
+        "default": "Copyright Gigawrks,LLC."
+      }
+    }
+  }
+}
