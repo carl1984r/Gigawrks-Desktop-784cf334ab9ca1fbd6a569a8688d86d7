@@ -52,6 +52,7 @@ export function MeetingComponent({friendState, meeting, meetingSettings}:meeting
     const audioStreamRef = useRef<MediaStream | null | undefined>(null);
     useEffect(() => { audioStreamRef.current = audioStream }, [audioStream]);
     const [videoStream, setVideoStream] = useState<MediaStream | null>()
+    const [screenShareEnabled, setScreenShareEnabled] = useState(false);
     const videoStreamRef = useRef<MediaStream | null | undefined>(null);
     useEffect(() => { videoStreamRef.current = videoStream }, [videoStream]);
     const useWS = useWebSocket(`wss://gapi.gigawrks.com/rtc/room/${meeting}/ws`, true, () => setWsReady(true))
@@ -173,6 +174,81 @@ export function MeetingComponent({friendState, meeting, meetingSettings}:meeting
             console.error("audioPub() error:", err);
         }
     }
+
+    async function screenPub(enabled: boolean) {
+      try {
+        if (enabled) {
+          if (!roomPcs.current.video) {
+            await createPeerConnection("");
+          }
+
+          const displayStream = await navigator.mediaDevices.getDisplayMedia({
+            video: true
+          });
+
+          const screenTrack = displayStream.getVideoTracks()[0];
+          screenTrack.enabled = enabled;
+
+          if (roomPcs.current.video) {
+            const videoSender = roomPcs.current.video
+            .getSenders()
+            .find(s => s.track?.kind === "video");
+
+            if (videoSender) {
+              // Swap camera for screen
+              await videoSender.replaceTrack(screenTrack);
+              setScreenShareEnabled(true)
+            } else {
+              roomPcs.current.video.addTrack(screenTrack, displayStream);
+            }
+          }
+
+          setVideoStream(displayStream)
+        } else {
+          // 1. Stop the current (screen) stream
+          if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+          }
+
+          // 2. Setup Camera constraints
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const availableCameras = devices.filter((d) => d.kind === "videoinput");
+          const camExists = availableCameras.some((cam) => cam.deviceId === selectedCam);
+          const deviceIdToUse = camExists ? selectedCam : undefined;
+
+          // 3. Get Webcam Stream
+          const webcamStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              deviceId: deviceIdToUse ? { exact: deviceIdToUse } : undefined,
+            },
+          });
+
+          const webcamTrack = webcamStream.getVideoTracks()[0];
+
+          // 4. Corrected replaceTrack logic (must call on the SENDER)
+          const videoSender = roomPcs.current.video
+          ?.getSenders()
+          .find(s => s.track?.kind === "video");
+
+          if (videoSender) {
+            await videoSender.replaceTrack(webcamTrack);
+          }
+
+          setVideoStream(webcamStream);
+          setScreenShareEnabled(false);
+          setIsVideoOn(true); // Webcam is back on
+
+          // 5. Renegotiate if needed (though replaceTrack usually doesn't require it)
+          if (roomPcs.current.video) {
+            await renegotiateConnection(roomPcs.current.video, "video", sendWsMessage);
+          }
+        }
+      } catch (err) {
+        console.error("screenPub() error:", err);
+        setScreenShareEnabled(false);
+      }
+    }
+
     async function videoPub(enabled: boolean) {
         try {
             // Ensure peer connection exists
@@ -192,7 +268,7 @@ export function MeetingComponent({friendState, meeting, meetingSettings}:meeting
                     }
                 });
 
-                return; // ✅ Do NOT renegotiate, track already exists
+                return;
             }
 
             // Otherwise, create once
@@ -214,9 +290,6 @@ export function MeetingComponent({friendState, meeting, meetingSettings}:meeting
             const videoSt = await navigator.mediaDevices.getUserMedia({
                 video: {
                     deviceId: deviceIdToUse ? { exact: deviceIdToUse } : undefined,
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: false,
                 },
             });
 
@@ -251,6 +324,7 @@ export function MeetingComponent({friendState, meeting, meetingSettings}:meeting
             console.error("videoPub() error:", err);
         }
     }
+
     const createPeerConnection = async (kind: string)  =>{
         if (!servers){
             const r = await GetRoomTurnCred(meeting)
@@ -565,6 +639,8 @@ export function MeetingComponent({friendState, meeting, meetingSettings}:meeting
             {/* Controls */}
             <div className="sticky bottom-0 left-0 right-0 bg-background py-3 flex justify-center">
                 <BottomControls
+                    screenShareEnabled={screenShareEnabled}
+                    screenPub={screenPub}
                     friendState={friendState}
                     isAudioOn={isAudioOn}
                     setIsAudioOn={setIsAudioOn}
