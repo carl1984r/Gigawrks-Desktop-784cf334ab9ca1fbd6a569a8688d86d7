@@ -140,9 +140,10 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
         videoOn: boolean
       }
   ) => void
+  setIsQrModalOpen: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export function AppSidebar({friendState, loggedInUser,onlineContacts, meetingState, ...props }: AppSidebarProps) {
+export function AppSidebar({friendState, loggedInUser, onlineContacts, meetingState, setIsQrModalOpen, ...props }: AppSidebarProps) {
 
   const [contacts, setContacts] = useState<Auth.Contact[]>([])
   useEffect(() => {
@@ -182,7 +183,7 @@ export function AppSidebar({friendState, loggedInUser,onlineContacts, meetingSta
       </SidebarContent>
       <SidebarFooter>
         <NavMeeting meetingState={meetingState}/>
-        <NavUser  user={loggedInUser}/>
+        <NavUser user={loggedInUser} setIsQrModalOpen={setIsQrModalOpen} />
       </SidebarFooter>
     </Sidebar>
   )

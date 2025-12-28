@@ -11,6 +11,15 @@ import {useOnlineContacts} from "@/components/hooks/useOnlineContacts.tsx";
 import {MeetingComponent} from "@/components/meeting/meetingComponent";
 export const iframeHeight = "800px"
 export const description = "A sidebar with a header and a search form."
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import {
+  QrCode,
+} from "lucide-react"
 
 interface HomeProps {
     selfId: number
@@ -18,6 +27,7 @@ interface HomeProps {
 export default function Home({ selfId }: HomeProps) {
     const [selectedFriend, setSelectedFriend] = useState<Auth.Contact | null>(null)
     const [selectedMeeting, setSelectedMeeting] = useState<string | null>(null)
+    const [isQrModalOpen, setIsQrModalOpen] = useState(false);
     const [meetingSettings, setMeetingSettings] = useState<{
         micId: string | null,
         camId: string | null,
@@ -85,10 +95,26 @@ export default function Home({ selfId }: HomeProps) {
     return (
         <div className="h-screen flex flex-col [--header-height:calc(--spacing(14))]">
 
+            <Dialog open={isQrModalOpen} onOpenChange={setIsQrModalOpen}>
+              <DialogContent className="sm:max-w-md text-white border-none">
+                <DialogHeader>
+                  <DialogTitle>{loggedInUser ? `${loggedInUser.first_name}'s Gigatag` : "My Gigatag"}</DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col items-center justify-center p-6 space-y-4">
+                  {/* Replace with your actual QR code logic/image */}
+                <div className="bg-white p-4 rounded-xl border-2 border-slate-100">
+                  <QrCode size={200} className="text-black" />
+                </div>
+                  <p className="text-sm text-muted-foreground text-center">
+                    Scan this code to quickly add friends.
+                  </p>
+                </div>
+              </DialogContent>
+            </Dialog>
             <SidebarProvider className="flex flex-col flex-1 overflow-hidden">
                 <SiteHeader />
                 <div className="flex flex-1 overflow-hidden">
-                    <AppSidebar friendState={changeSelectedFrined} meetingState={changeSelectedMeeting} loggedInUser={loggedInUser} onlineContacts={onlineContacts}/>
+                    <AppSidebar friendState={changeSelectedFrined} meetingState={changeSelectedMeeting} loggedInUser={loggedInUser} onlineContacts={onlineContacts} setIsQrModalOpen={setIsQrModalOpen} />
                     <SidebarInset className="flex-1 overflow-hidden">
                         <div className="flex h-full flex-col">
                             {selectedFriend ?

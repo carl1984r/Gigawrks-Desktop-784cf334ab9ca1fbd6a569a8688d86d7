@@ -193,8 +193,10 @@ export const setupRoomOntrack = async (
         } else {
             return;
         }
+        window.setTimeout(() => {
+          addOrUpdateStream(streamParse.userId, st, setRemoteStreams);
+        }, 4000);
 
-        addOrUpdateStream(streamParse.userId, st, setRemoteStreams);
     };
 };
 export const setupOnIceCandidate = async (PC: RTCPeerConnection, kind: string, sendMessage: (arg0: string) => void) => {
