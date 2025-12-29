@@ -1,14 +1,12 @@
-import { SidebarIcon, Bell, CheckCheck, Trash2 } from "lucide-react"
+import { SidebarIcon, Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator"
 import { useSidebar } from "@/components/ui/sidebar"
 import { useEffect } from "react"
-import useTheme from "@/components/hooks/useTheme.tsx";
 
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar()
@@ -22,7 +20,7 @@ export function SiteHeader() {
     // setTheme(initialTheme)
     document.documentElement.classList.toggle("dark", initialTheme === "dark")
   }, [])
-  const { toggleTheme } = useTheme()
+  // const { toggleTheme } = useTheme()
   const notifications = [
     { id: 1, title: "New Message", description: "John sent you a file", time: "2m ago", unread: true },
     { id: 2, title: "Meeting Alert", description: "Giga-Room #4 starts in 5 mins", time: "1h ago", unread: false },
@@ -51,7 +49,7 @@ export function SiteHeader() {
             <Button
               className="h-12 w-12 absolute right-4 focus-visible:ring-0"
               variant="link"
-              size="none"
+              size="default"
             >
               <div className="relative">
                 <Bell className="size-6 text-slate-400 hover:text-white transition-colors" />
