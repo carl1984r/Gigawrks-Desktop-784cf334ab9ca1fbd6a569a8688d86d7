@@ -6,6 +6,10 @@ export function ConnectToWS() {
   return window['go']['main']['App']['ConnectToWS']();
 }
 
+export function CopyToClipboard(arg1) {
+  return window['go']['main']['App']['CopyToClipboard'](arg1);
+}
+
 export function CreateMeetingRoom(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['CreateMeetingRoom'](arg1, arg2, arg3, arg4, arg5);
 }

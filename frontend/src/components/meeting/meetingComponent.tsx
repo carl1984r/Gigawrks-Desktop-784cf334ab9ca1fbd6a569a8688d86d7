@@ -602,11 +602,9 @@ export function MeetingComponent({friendState, meeting, meetingSettings}:meeting
             {/* Header */}
             <div className="mb-4 flex items-center justify-between">
                 <div>
-                    <h2 className="text-sm">Meeting</h2>
                     <h1 className="text-2xl font-semibold">
-                        {meetingDetails?.title || meetingDetails.id}
+                        {`Meeting (${meetingDetails.id.slice(-4)})`}
                     </h1>
-                    <h1 className="text-2xl font-semibold">{meetingDetails?.id}</h1>
                 </div>
 
                 {/* ⚙️ Settings Dialog Trigger */}
@@ -639,6 +637,7 @@ export function MeetingComponent({friendState, meeting, meetingSettings}:meeting
             {/* Controls */}
             <div className="sticky bottom-0 left-0 right-0 bg-background py-3 flex justify-center">
                 <BottomControls
+                    meetingDetails={meetingDetails?.id || ""}
                     screenShareEnabled={screenShareEnabled}
                     screenPub={screenPub}
                     friendState={friendState}

@@ -94,7 +94,6 @@ export default function Home({ selfId }: HomeProps) {
 
     return (
         <div className="h-screen flex flex-col [--header-height:calc(--spacing(14))]">
-
             <Dialog open={isQrModalOpen} onOpenChange={setIsQrModalOpen}>
               <DialogContent className="sm:max-w-md text-white border-none">
                 <DialogHeader>

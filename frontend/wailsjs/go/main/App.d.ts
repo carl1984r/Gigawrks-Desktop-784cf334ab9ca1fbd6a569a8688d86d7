@@ -6,6 +6,8 @@ import {chat} from '../models';
 
 export function ConnectToWS():Promise<string>;
 
+export function CopyToClipboard(arg1:string):Promise<void>;
+
 export function CreateMeetingRoom(arg1:string,arg2:boolean,arg3:boolean,arg4:boolean,arg5:number):Promise<webrtc.Response_Desktop_Wails_Gigawrks_controllers_webrtc_RoomCreateResponse_>;
 
 export function GetAccessToken():Promise<string>;

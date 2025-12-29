@@ -127,7 +127,7 @@ export function NavUser({ user, setIsQrModalOpen }: NavUserProps) {
                             </DropdownMenuItem>
                             <DropdownMenuItem onSelect={handleOpenQr}>
                                 <QrCode />
-                                My QR/Gigatag
+                                QR/Gigatag
                             </DropdownMenuItem>
                             <DropdownMenuItem>
                                 <Bell/>

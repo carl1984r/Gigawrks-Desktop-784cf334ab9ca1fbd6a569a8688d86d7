@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"time"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	ws "github.com/gorilla/websocket"
 	"github.com/zalando/go-keyring"
@@ -46,6 +47,10 @@ const (
 	secretRefreshToken = "secretRefreshToken"
 	secretAccessToken  = "secretAccessToken"
 )
+
+func (a *App) CopyToClipboard(text string) {
+    runtime.ClipboardSetText(a.ctx, text)
+}
 
 func (a *App) saveSecretTokens() {
 	if a.refreshToken != "" {
