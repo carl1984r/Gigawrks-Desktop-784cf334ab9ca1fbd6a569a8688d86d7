@@ -603,7 +603,7 @@ export function MeetingComponent({friendState, meeting, meetingSettings}:meeting
             <div className="mb-4 flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold">
-                        {`Meeting (${meetingDetails.id.slice(-4)})`}
+                        {`Meeting (${meetingDetails?.id?.slice(-4)})`}
                     </h1>
                 </div>
 

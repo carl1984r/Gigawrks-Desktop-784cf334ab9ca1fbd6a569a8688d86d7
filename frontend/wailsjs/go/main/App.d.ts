@@ -4,6 +4,8 @@ import {webrtc} from '../models';
 import {Auth} from '../models';
 import {chat} from '../models';
 
+export function ConnectToNotificationsWS():Promise<void>;
+
 export function ConnectToWS():Promise<string>;
 
 export function CopyToClipboard(arg1:string):Promise<void>;

@@ -4,6 +4,7 @@ import (
 	"Desktop-Wails-Gigawrks/configs"
 	"Desktop-Wails-Gigawrks/controllers/Auth"
 	"Desktop-Wails-Gigawrks/controllers/chat"
+	"Desktop-Wails-Gigawrks/controllers/notifications"
 	"Desktop-Wails-Gigawrks/controllers/webrtc"
 	"Desktop-Wails-Gigawrks/controllers/websocket"
 	"context"
@@ -12,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/cookiejar"
+	"sync"
 	"time"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
@@ -21,13 +23,17 @@ import (
 
 // App struct
 type App struct {
-	ctx               context.Context
-	accessToken       string
-	accessTokenExpiry time.Time
-	userData          Auth.User
-	refreshToken      string
-	onlineWS          *websocket.WSConnection
-	liveOTO           int
+	ctx                  context.Context
+	accessToken          string
+	accessTokenExpiry    time.Time
+	userData             Auth.User
+	refreshToken         string
+	onlineWS             *websocket.WSConnection
+	onlineCableWS        *websocket.WSConnection
+	onlineNotifications  string
+	liveOTO              int
+	cancelWS 						 context.CancelFunc
+  mu       						 sync.Mutex // To prevent race conditions during reconnects
 }
 type SavedMemory struct {
 	RefreshToken string
@@ -275,6 +281,91 @@ func (a *App) ConnectToWS() (err string) {
 
 	}
 }
+
+
+func (a *App) ConnectToNotificationsWS() {
+	a.mu.Lock()
+	// 1. If a connection already exists, cancel it to kill the old goroutine
+	if a.cancelWS != nil {
+		log.Println("🔄 Hot reload detected: Closing old WebSocket...")
+		a.cancelWS()
+	}
+
+	// 2. Create a new context for this specific connection
+	ctx, cancel := context.WithCancel(context.Background())
+	a.cancelWS = cancel
+	a.mu.Unlock()
+
+	go func() {
+		defer log.Println("🛑 WebSocket goroutine exited.")
+
+		header := http.Header{}
+		header.Add("Sec-WebSocket-Protocol", "actioncable-v1-json")
+		header.Add("Authorization", fmt.Sprintf("Bearer %s", a.accessToken))
+
+		conn, _, e := ws.DefaultDialer.Dial(configs.NotificationsURL, header)
+		if e != nil {
+			log.Println("❌ Dial error:", e)
+			return
+		}
+
+		a.onlineCableWS = websocket.NewWSConnection(conn)
+
+		// Ensure connection closes when goroutine ends
+		defer a.onlineCableWS.Close()
+
+		// Start a side-loop to watch for the cancellation signal
+		go func() {
+			<-ctx.Done()
+			a.onlineCableWS.Close() // Force close the socket to break the ReadMessage loop
+		}()
+
+		if a.accessToken != "" {
+			identifier := fmt.Sprintf(`{"channel":"NotificationSocketChannel","token":"%s"}`, a.accessToken)
+			authMsg := map[string]string{
+				"command":    "subscribe",
+				"identifier": identifier,
+			}
+
+			if e := a.onlineCableWS.EnqueueMessage(authMsg); e != nil {
+				log.Println("❌ Send auth failed:", e)
+			}
+		}
+
+		for {
+			// Check if context was cancelled before reading
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				_, msg, e := conn.ReadMessage()
+				if e != nil {
+					log.Println("Read error (expected on reconnect):", e)
+					return
+				}
+
+				var raw map[string]any
+				if err := json.Unmarshal(msg, &raw); err == nil {
+					// --- Logic for 'welcome' and 'identifier' stays the same ---
+					if msgType, ok := raw["type"].(string); ok && msgType == "welcome" {
+						cmd := notifications.ActionCableCommand{
+							Command:    "message",
+							Identifier: fmt.Sprintf(`{"channel":"NotificationSocketChannel","token":"%s"}`, a.accessToken),
+							Data:       `{"action":"get_notifications"}`,
+						}
+						conn.WriteJSON(cmd)
+					}
+
+					if _, ok := raw["identifier"].(string); ok {
+						runtime.EventsEmit(a.ctx, "new_notifications", string(msg))
+					}
+				}
+			}
+		}
+	}()
+}
+
+
 
 func (a *App) SendChatReadWsMsg(userId int) (err string) {
 	err = a.SendOnlineWsMsg(chat.OnlineWsMessage{
