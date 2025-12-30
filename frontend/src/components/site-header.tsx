@@ -6,9 +6,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useSidebar } from "@/components/ui/sidebar"
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { EventsOn } from "../../wailsjs/runtime/runtime";
 import { ConnectToNotificationsWS } from "../../wailsjs/go/main/App";
+import { CopyToClipboard } from "../../wailsjs/go/main/App";
 
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar()
@@ -30,7 +31,7 @@ export function SiteHeader() {
     document.documentElement.classList.toggle("dark", initialTheme === "dark")
 
     ConnectToNotificationsWS()
-  
+
     const unsubscribe = EventsOn("new_notifications", (data) => {
       let parsedData = data;
 
@@ -72,6 +73,81 @@ export function SiteHeader() {
     const daysDiff = Math.round(hoursDiff / 24);
     return rtf.format(daysDiff, 'day');
   }
+
+  const redirectToMeeting = (url: string) => {
+    console.log("Redirect to meeting:", url);
+
+  };
+
+  const copyToClipboard = (url: string) => {
+    const modifiedUrl = url.replace("gapi.gigawrks.com/rtc/room", "gigawrks.com/room");
+
+    CopyToClipboard(modifiedUrl)
+    .then(() => {
+      console.log("Native macOS copy successful:", modifiedUrl);
+    })
+    .catch((err) => {
+      console.error("Native copy failed", err);
+    });
+  };
+
+  const renderEventContent = (eventText: string) => {
+    // Regex to detect the gapi.gigawrks.com/rtc/room/ URL pattern
+    const roomUrlRegex = /(https:\/\/gapi\.gigawrks\.com\/rtc\/room\/[a-zA-Z0-9-]+)/;
+
+    if (!eventText) return null;
+
+    // Split the text by the URL to find matches
+    const parts = eventText.split(roomUrlRegex);
+
+    return parts.map((part: string, index: number) => {
+      if (roomUrlRegex.test(part)) {
+        return (
+          <React.Fragment key={index}>
+          {/* Force the buttons to a new line */}
+          <br />
+          <span className="inline-flex items-center gap-2 mt-1">
+            <button
+              onClick={() => redirectToMeeting(part)}
+              className="text-blue-500 hover:underline font-medium cursor-pointer"
+            >
+              Link
+            </button>
+            <span className="text-slate-300">|</span>
+            <button
+              onClick={() => copyToClipboard(part)} // Now using your updated copy function
+              className="text-emerald-500 hover:underline font-medium cursor-pointer"
+            >
+              Copy
+            </button>
+          </span>
+        </React.Fragment>
+        );
+      }
+      return part;
+    });
+  };
+
+  const renderEventContent_ = (eventText: string) => {
+    // Regex to detect the gapi.gigawrks.com/rtc/room/ URL pattern
+    const roomUrlRegex = /(https:\/\/gapi\.gigawrks\.com\/rtc\/room\/[a-zA-Z0-9-]+)/;
+
+    if (!eventText) return null;
+
+    // Split the text by the URL to find matches
+    const parts = eventText.split(roomUrlRegex);
+
+    return parts.map((part: string, index: number) => {
+      if (roomUrlRegex.test(part)) {
+        return (
+          <React.Fragment key={index}>
+            <span></span>
+          </React.Fragment>
+        );
+      }
+      return part;
+    });
+  };
 
   return (
       <header className="bg-sidebar sticky top-0 z-50 flex w-full items-center border-b">
@@ -124,11 +200,11 @@ export function SiteHeader() {
                         {/* 1. Text Container (flex-1 lets it grow/shrink) */}
                         <div className="flex-1 min-w-0 space-y-1">
                           <p className={`text-sm leading-tight truncate ${!n.interacted_at ? "text-slate-100 font-semibold" : "text-slate-400"}`}>
-                            {n.event}
+                            {renderEventContent_(n.event)}
                           </p>
                           <p className="text-xs text-slate-500">
                             {/* You could put notification details here if available */}
-                            {n.event}
+                            {renderEventContent(n.event)}
                           </p>
                         </div>
 
