@@ -6,22 +6,41 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useSidebar } from "@/components/ui/sidebar"
+import { MeetingJoinDialog } from "@/components/meeting/MeetingJoinDialog.tsx"
 import React, { useEffect, useState } from "react"
 import { EventsOn } from "../../wailsjs/runtime/runtime";
 import { ConnectToNotificationsWS } from "../../wailsjs/go/main/App";
 import { CopyToClipboard } from "../../wailsjs/go/main/App";
 
-export function SiteHeader() {
-  const { toggleSidebar } = useSidebar()
-  const [notificationsObject, setNotificationsObject] = useState<Notification[]>([]);
+export interface AppNotification {
+  notification_id: number;
+  event: string;
+  timestamp: string;
+  interacted_at: string | null;
+  type: number;
+  meetingState: (
+    meetingId: string | null,
+    settings: {
+      micId: string | null;
+      camId: string | null;
+      audioOn: boolean;
+      videoOn: boolean;
+    }
+  ) => void;
+}
 
-  interface Notification {
-    notification_id: number;
-    event: string;
-    timestamp: string;
-    interacted_at: string | null; // or null if it's a date string
-    type: number;
-  }
+interface SiteHeaderProps {
+  // We extract the meetingState function type from our interface
+  meetingState?: AppNotification['meetingState'];
+  // If you are passing an array of notifications too, add them here:
+  notifications?: AppNotification[];
+}
+
+export function SiteHeader({ meetingState }: SiteHeaderProps) {
+  const { toggleSidebar } = useSidebar()
+  const [notificationsObject, setNotificationsObject] = useState<AppNotification[]>([]);
+  const [showJoinDialog, setShowJoinDialog] = useState(false)
+  const [selectedMeeting, setSelectedMeeting] = useState<string | null>(null)
 
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme") as "light" | "dark" | null
@@ -74,9 +93,27 @@ export function SiteHeader() {
     return rtf.format(daysDiff, 'day');
   }
 
-  const redirectToMeeting = (url: string) => {
-    console.log("Redirect to meeting:", url);
+  const handleJoinMeeting = (settings: {
+      micId: string | null
+      camId: string | null
+      audioOn: boolean
+      videoOn: boolean
+  }) => {
+      setShowJoinDialog(false)
+      if (selectedMeeting && meetingState) meetingState(selectedMeeting, settings)
+  }
 
+  const redirectToMeeting = (url: string) => {
+    const meetingId = url.split('/').pop();
+
+    console.log("Extracted Meeting ID:", meetingId);
+
+    if (meetingId) {
+      setSelectedMeeting(meetingId);
+      setShowJoinDialog(true);
+    } else {
+      console.error("Could not extract meeting ID from URL:", url);
+    }
   };
 
   const copyToClipboard = (url: string) => {
@@ -111,7 +148,7 @@ export function SiteHeader() {
               onClick={() => redirectToMeeting(part)}
               className="text-blue-500 hover:underline font-medium cursor-pointer"
             >
-              Link
+              Join
             </button>
             <span className="text-slate-300">|</span>
             <button
@@ -150,6 +187,7 @@ export function SiteHeader() {
   };
 
   return (
+    <>
       <header className="bg-sidebar sticky top-0 z-50 flex w-full items-center border-b">
         <div className="flex h-(--header-height) w-full items-center">
           <Button
@@ -238,5 +276,11 @@ export function SiteHeader() {
           </Popover>
         </div>
       </header>
+      <MeetingJoinDialog
+          open={showJoinDialog}
+          onClose={() => setShowJoinDialog(false)}
+          onJoin={handleJoinMeeting}
+      />
+      </>
   )
 }
