@@ -32,6 +32,10 @@ export function LoginWithEmail(arg1:string,arg2:string):Promise<string>;
 
 export function Logout():Promise<boolean>;
 
+export function MarkAllNotificationsAsRead(arg1:string):Promise<void>;
+
+export function MarkNotificationAsRead(arg1:string):Promise<void>;
+
 export function OnlineWSAddr():Promise<string>;
 
 export function SendChatReadWsMsg(arg1:number):Promise<string>;

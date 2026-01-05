@@ -9,7 +9,7 @@ import { useSidebar } from "@/components/ui/sidebar"
 import { MeetingJoinDialog } from "@/components/meeting/MeetingJoinDialog.tsx"
 import React, { useEffect, useState } from "react"
 import { EventsOn } from "../../wailsjs/runtime/runtime";
-import { ConnectToNotificationsWS } from "../../wailsjs/go/main/App";
+import { ConnectToNotificationsWS, MarkAllNotificationsAsRead, MarkNotificationAsRead } from "../../wailsjs/go/main/App";
 import { CopyToClipboard } from "../../wailsjs/go/main/App";
 
 export interface AppNotification {
@@ -165,6 +165,16 @@ export function SiteHeader({ meetingState }: SiteHeaderProps) {
     });
   };
 
+  const handleMarkAllNotificationsAsRead = () => {
+    console.log('Notification All clicked:');
+    MarkAllNotificationsAsRead()
+  };
+
+  const handleNotificationClick = (notificationId: string) => {
+    console.log('Notification clicked:', notificationId);
+    MarkNotificationAsRead(notificationId)
+  };
+
   const renderEventContent_ = (eventText: string) => {
     // Regex to detect the gapi.gigawrks.com/rtc/room/ URL pattern
     const roomUrlRegex = /(https:\/\/gapi\.gigawrks\.com\/rtc\/room\/[a-zA-Z0-9-]+)/;
@@ -209,7 +219,7 @@ export function SiteHeader({ meetingState }: SiteHeaderProps) {
                 <div className="relative">
                   <Bell className="size-6 text-slate-400 hover:text-white transition-colors" />
                   {/* Only show red dot if there are unread notifications */}
-                  {Array.isArray(notificationsObject) && notificationsObject?.some(n => !n.interacted_at) && (
+                  {Array.isArray(notificationsObject) && notificationsObject?.some(n => !n?.interacted_at) && (
                     <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
@@ -222,40 +232,41 @@ export function SiteHeader({ meetingState }: SiteHeaderProps) {
             <PopoverContent align="end" className="w-[40vw] p-0 bg-slate-900 border-slate-800 shadow-2xl">
               <div className="flex items-center justify-between p-4 border-b border-slate-800">
                 <h4 className="text-sm font-semibold text-white">Notifications</h4>
-                <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-400 hover:text-white">
+                <Button onClick={() => handleMarkAllNotificationsAsRead()} variant="ghost" size="sm" className="h-8 text-xs text-slate-400 hover:text-white">
                   Mark all read
                 </Button>
               </div>
 
               <div className="max-h-[350px] overflow-y-auto overflow-x-hidden custom-scrollbar">
                 {notificationsObject?.length > 0 ? (
-                  notificationsObject.map((n) => (
+                  notificationsObject?.map((n) => (
                     <div
-                      key={n.notification_id}
+                      key={n?.notification_id}
                       className="p-4 border-b border-slate-800/50 hover:bg-slate-800/40 transition-colors cursor-pointer group"
+                      onClick={() => handleNotificationClick(String(n?.notification_id))}
                     >
                       <div className="flex flex-row items-start gap-4">
                         {/* 1. Text Container (flex-1 lets it grow/shrink) */}
                         <div className="flex-1 min-w-0 space-y-1">
-                          <p className={`text-sm leading-tight truncate ${!n.interacted_at ? "text-slate-100 font-semibold" : "text-slate-400"}`}>
-                            {renderEventContent_(n.event)}
+                          <p className={`text-sm leading-tight truncate ${!n?.interacted_at ? "text-slate-100 font-semibold" : "text-slate-400"}`}>
+                            {renderEventContent_(n?.event)}
                           </p>
                           <p className="text-xs text-slate-500">
                             {/* You could put notification details here if available */}
-                            {renderEventContent(n.event)}
+                            {renderEventContent(n?.event)}
                           </p>
                         </div>
 
                         {/* 2. Dot Container (fixed width prevents being pushed) */}
                         <div className="flex-shrink-0 w-2 mt-1.5">
-                          {!n.interacted_at && (
+                          {!n?.interacted_at && (
                             <div className="h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
                           )}
                         </div>
                       </div>
 
                       <p className="text-[10px] text-slate-600 mt-2 uppercase font-bold tracking-wider">
-                        {timeAgo(n.timestamp)}
+                        {timeAgo(n?.timestamp)}
                       </p>
                     </div>
                   ))

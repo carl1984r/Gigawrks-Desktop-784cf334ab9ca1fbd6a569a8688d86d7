@@ -58,6 +58,14 @@ export function Logout() {
   return window['go']['main']['App']['Logout']();
 }
 
+export function MarkAllNotificationsAsRead(arg1) {
+  return window['go']['main']['App']['MarkAllNotificationsAsRead'](arg1);
+}
+
+export function MarkNotificationAsRead(arg1) {
+  return window['go']['main']['App']['MarkNotificationAsRead'](arg1);
+}
+
 export function OnlineWSAddr() {
   return window['go']['main']['App']['OnlineWSAddr']();
 }
