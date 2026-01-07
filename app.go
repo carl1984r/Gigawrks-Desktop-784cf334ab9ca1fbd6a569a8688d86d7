@@ -282,7 +282,7 @@ func (a *App) ConnectToWS() (err string) {
 	}
 }
 
-func (a *App) MarkAllNotificationsAsRead(id string) {
+func (a *App) MarkAllNotificationsAsRead() {
 		go a.connectAndSend(`{"action":"mark_as_interacted","id":false}`)
 }
 

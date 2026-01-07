@@ -58,8 +58,8 @@ export function Logout() {
   return window['go']['main']['App']['Logout']();
 }
 
-export function MarkAllNotificationsAsRead(arg1) {
-  return window['go']['main']['App']['MarkAllNotificationsAsRead'](arg1);
+export function MarkAllNotificationsAsRead() {
+  return window['go']['main']['App']['MarkAllNotificationsAsRead']();
 }
 
 export function MarkNotificationAsRead(arg1) {

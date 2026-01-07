@@ -6,11 +6,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useSidebar } from "@/components/ui/sidebar"
-import { MeetingJoinDialog } from "@/components/meeting/MeetingJoinDialog.tsx"
 import React, { useEffect, useState } from "react"
 import { EventsOn } from "../../wailsjs/runtime/runtime";
 import { ConnectToNotificationsWS, MarkAllNotificationsAsRead, MarkNotificationAsRead } from "../../wailsjs/go/main/App";
 import { CopyToClipboard } from "../../wailsjs/go/main/App";
+import { useNavigate } from "react-router-dom";
 
 export interface AppNotification {
   notification_id: number;
@@ -29,32 +29,21 @@ export interface AppNotification {
   ) => void;
 }
 
-interface SiteHeaderProps {
-  // We extract the meetingState function type from our interface
-  meetingState?: AppNotification['meetingState'];
-  // If you are passing an array of notifications too, add them here:
-  notifications?: AppNotification[];
-}
-
-export function SiteHeader({ meetingState }: SiteHeaderProps) {
+export function SiteHeader() {
   const { toggleSidebar } = useSidebar()
   const [notificationsObject, setNotificationsObject] = useState<AppNotification[]>([]);
-  const [showJoinDialog, setShowJoinDialog] = useState(false)
-  const [selectedMeeting, setSelectedMeeting] = useState<string | null>(null)
+  const navigate = useNavigate();
 
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme") as "light" | "dark" | null
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
     const initialTheme = storedTheme || (prefersDark ? "dark" : "light")
-    // setTheme(initialTheme)
     document.documentElement.classList.toggle("dark", initialTheme === "dark")
 
     ConnectToNotificationsWS()
 
     const unsubscribe = EventsOn("new_notifications", (data) => {
       let parsedData = data;
-
-      // If data is a string, parse it
       if (typeof data === 'string') {
         try {
           parsedData = JSON.parse(data);
@@ -93,24 +82,13 @@ export function SiteHeader({ meetingState }: SiteHeaderProps) {
     return rtf.format(daysDiff, 'day');
   }
 
-  const handleJoinMeeting = (settings: {
-      micId: string | null
-      camId: string | null
-      audioOn: boolean
-      videoOn: boolean
-  }) => {
-      setShowJoinDialog(false)
-      if (selectedMeeting && meetingState) meetingState(selectedMeeting, settings)
-  }
-
   const redirectToMeeting = (url: string) => {
     const meetingId = url.split('/').pop();
 
     console.log("Extracted Meeting ID:", meetingId);
 
     if (meetingId) {
-      setSelectedMeeting(meetingId);
-      setShowJoinDialog(true);
+      navigate(`/?meetingId=${meetingId}`);
     } else {
       console.error("Could not extract meeting ID from URL:", url);
     }
@@ -129,19 +107,15 @@ export function SiteHeader({ meetingState }: SiteHeaderProps) {
   };
 
   const renderEventContent = (eventText: string) => {
-    // Regex to detect the gapi.gigawrks.com/rtc/room/ URL pattern
     const roomUrlRegex = /(https:\/\/gapi\.gigawrks\.com\/rtc\/room\/[a-zA-Z0-9-]+)/;
 
     if (!eventText) return null;
-
-    // Split the text by the URL to find matches
     const parts = eventText.split(roomUrlRegex);
 
     return parts.map((part: string, index: number) => {
       if (roomUrlRegex.test(part)) {
         return (
           <React.Fragment key={index}>
-          {/* Force the buttons to a new line */}
           <br />
           <span className="inline-flex items-center gap-2 mt-1">
             <button
@@ -176,12 +150,9 @@ export function SiteHeader({ meetingState }: SiteHeaderProps) {
   };
 
   const renderEventContent_ = (eventText: string) => {
-    // Regex to detect the gapi.gigawrks.com/rtc/room/ URL pattern
     const roomUrlRegex = /(https:\/\/gapi\.gigawrks\.com\/rtc\/room\/[a-zA-Z0-9-]+)/;
 
     if (!eventText) return null;
-
-    // Split the text by the URL to find matches
     const parts = eventText.split(roomUrlRegex);
 
     return parts.map((part: string, index: number) => {
@@ -287,11 +258,6 @@ export function SiteHeader({ meetingState }: SiteHeaderProps) {
           </Popover>
         </div>
       </header>
-      <MeetingJoinDialog
-          open={showJoinDialog}
-          onClose={() => setShowJoinDialog(false)}
-          onJoin={handleJoinMeeting}
-      />
       </>
   )
 }

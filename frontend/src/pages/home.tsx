@@ -20,11 +20,23 @@ import {
 import {
   QrCode,
 } from "lucide-react"
+import { useSearchParams } from 'react-router-dom';
 
 interface HomeProps {
     selfId: number
 }
 export default function Home({ selfId }: HomeProps) {
+
+    const [searchParams, setSearchParams] = useSearchParams();
+    const meetingId = searchParams.get('meetingId');
+
+    useEffect(() => {
+      if (meetingId) {
+        setSelectedMeeting(meetingId);
+        setSearchParams({}, { replace: true });
+      }
+    }, [meetingId, setSearchParams]);
+
     const [selectedFriend, setSelectedFriend] = useState<Auth.Contact | null>(null)
     const [selectedMeeting, setSelectedMeeting] = useState<string | null>(null)
     const [isQrModalOpen, setIsQrModalOpen] = useState(false);
